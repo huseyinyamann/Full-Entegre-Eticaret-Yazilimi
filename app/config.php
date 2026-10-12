@@ -1,5 +1,5 @@
 <?php
-// Genel site ayarları. İleride admin panelden / veritabanından okunacak.
+// Varsayılan site ayarları. Admin panel > Ayarlar'dan kaydedilenler (settings tablosu) bunları ezer.
 return [
     'site_name'   => 'Yaman Ticaret',
     'site_slogan' => 'Aradığın her şey tek adreste',
@@ -16,10 +16,21 @@ return [
         'Yeni sezon ürünlerinde %30\'a varan indirim',
         '14 gün içinde ücretsiz iade',
     ],
+    'bank_accounts' => [
+        ['bank' => 'Örnek Bank', 'holder' => 'Yaman Ticaret', 'iban' => 'TR00 0000 0000 0000 0000 0000 00'],
+    ],
     'social' => [
         'instagram' => '#',
         'facebook'  => '#',
         'x'         => '#',
         'youtube'   => '#',
     ],
+    'db' => [
+        'host' => env('DB_HOST', '127.0.0.1'),
+        'port' => (int) env('DB_PORT', '3306'),
+        'name' => env('DB_NAME', 'yaman_eticaret'),
+        'user' => env('DB_USER', 'root'),
+        'pass' => env('DB_PASS', ''),
+    ],
+    'session_secure' => env('SESSION_SECURE', '0') === '1',
 ];

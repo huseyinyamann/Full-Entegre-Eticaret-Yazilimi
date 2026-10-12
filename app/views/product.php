@@ -122,12 +122,11 @@ $cartData = json_encode(['id' => $p['id'], 'name' => $p['name'], 'price' => $p['
             </ul>
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="tab-desc">
-                    <p><?= e($p['summary']) ?></p>
-                    <ul>
-                        <li>Nefes alabilen, cilt dostu malzeme</li>
-                        <li>Günlük kullanıma uygun dayanıklı yapı</li>
-                        <li>Türkiye'de üretilmiştir</li>
-                    </ul>
+                    <?php if ($p['description'] !== ''): ?>
+                        <?= $p['description'] /* admin panelde kaydedilirken sanitize edilir */ ?>
+                    <?php else: ?>
+                        <p><?= e($p['summary']) ?></p>
+                    <?php endif; ?>
                 </div>
                 <div class="tab-pane fade" id="tab-info">
                     <table class="table table-sm w-auto">

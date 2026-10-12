@@ -150,7 +150,7 @@
             <a href="<?= url('blog') ?>" class="link-more">Tüm Yazılar <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
-            <?php foreach (posts() as $i => $post): ?>
+            <?php foreach (posts(3) as $i => $post): ?>
                 <div class="col-md-4"><?php partial('post-card', ['post' => $post, 'i' => $i]); ?></div>
             <?php endforeach; ?>
         </div>

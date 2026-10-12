@@ -3,7 +3,7 @@
 <section class="section pt-4">
     <div class="container-xl">
         <div class="product-grid" style="--cols: 4" data-wishlist-grid>
-            <?php foreach (products() as $p): ?>
+            <?php foreach (products_by() as $p): ?>
                 <div class="d-none" data-wishlist-item="<?= $p['id'] ?>"><?php partial('product-card', ['p' => $p]); ?></div>
             <?php endforeach; ?>
         </div>
