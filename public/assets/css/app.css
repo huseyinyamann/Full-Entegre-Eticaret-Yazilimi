@@ -507,3 +507,14 @@ img { max-width: 100%; display: block; }
     *, .reveal { animation: none !important; transition: none !important; }
     .reveal { opacity: 1; transform: none; }
 }
+
+/* ---------- Üyelik / ödeme ---------- */
+.hp-field { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.auth-perks { list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 10px; }
+.auth-perks li { display: flex; align-items: center; gap: 10px; }
+.auth-perks i { width: 32px; height: 32px; border-radius: 8px; background: #fff; display: inline-flex; align-items: center; justify-content: center; color: var(--brand); }
+.checkout-login { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 14px 18px; margin-bottom: 20px; border-radius: var(--radius); background: var(--cream); }
+.checkout-login > i { font-size: 24px; color: var(--brand); }
+.order-complete { max-width: 640px; margin: 0 auto; text-align: center; padding: 40px 0; }
+.order-complete__icon { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 22px; display: flex; align-items: center; justify-content: center; background: #dcfce7; color: #16a34a; font-size: 42px; }
+.order-complete h1 { font-weight: 800; font-size: 32px; margin-bottom: 8px; }

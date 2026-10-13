@@ -27,6 +27,27 @@ php -S 127.0.0.1:8092 -t public public/router.php
 
 Laragon/Apache ile kullanırken site kökünü `public/` klasörüne yönlendirin (`.htaccess` hazır).
 
+Mevcut bir kurulumu güncellerken `database/migrations/` altındaki SQL dosyalarını tarih sırasıyla uygulayın:
+
+```bash
+mysql -u root yaman_eticaret < database/migrations/2026_10_13_customer_accounts.sql
+```
+
+## Müşteri hesabı
+
+`/kayit-ol`, `/giris` ve `/hesabim` sayfaları. Demo kurulumda: `musteri@yamanticaret.com` / `Musteri.2026!`
+
+- Hesabım: profil, e-posta değiştirme ve şifre değiştirme (ikisi de mevcut şifreyi ister)
+- Siparişlerim: durum sekmeleri, sipariş detayı, kargo takip numarası, beklemedeki siparişi iptal (stok geri eklenir)
+- Adreslerim: en fazla 10 adres, varsayılan adres; ödeme sayfasında tek tıkla doldurulur
+- Ödeme sayfası gerçek sipariş oluşturur (üye veya misafir). Sepetten yalnızca ürün/adet/seçenek gelir;
+  fiyat, kargo ve stok sunucuda, ürün satırları kilitlenerek hesaplanır
+
+Güvenlik: Argon2id, e-posta + IP bazlı giriş kilidi, IP başına kayıt sınırı ve bot tuzağı, `HttpOnly` +
+`SameSite=Lax` çerez (yalnızca gerektiğinde açılır), oturum sabitleme koruması, şifre değişince diğer
+cihazlardaki oturumların düşmesi, tüm POST'larda CSRF, açık yönlendirme (open redirect) koruması ve
+her sorgunun `customer_id` ile sınırlanması (başka müşterinin sipariş/adresine erişilemez).
+
 ## Yönetim paneli
 
 `/admin` adresinden girilir. Demo kurulumda: `admin@yamanticaret.com` / `Yaman.2026!`
@@ -51,18 +72,20 @@ app/
   bootstrap.php     Uygulama başlangıcı
   config.php        Varsayılan ayarlar (panelden kaydedilenler bunları ezer)
   helpers.php       Yardımcı fonksiyonlar (url, img, money, render…)
-  lib/              .env okuyucu, PDO yardımcıları, HTML temizleyici
+  lib/              .env okuyucu, PDO yardımcıları, HTML temizleyici, güvenlik, müşteri oturumu, sipariş
+  store/            Vitrin denetleyicileri (giriş/kayıt, hesabım, ödeme)
   data/repository.php  Vitrin veri katmanı (MySQL)
   admin/            Yönetim paneli (router, modüller, görünümler)
   partials/         Header, footer, ürün kartı vb. parçalar
-  views/            Sayfa şablonları
+  views/            Sayfa şablonları (account/ altında Hesabım paneli)
 bin/install.php     Kurulum betiği
 database/
   schema.sql        Veritabanı şeması
+  migrations/       Mevcut kurulumlar için şema güncellemeleri
   seeds/demo.php    Demo veri
 public/
   index.php         Front controller / yönlendirme
-  assets/           CSS, JS, görseller (admin/ altında panel teması)
+  assets/           CSS, JS, görseller (admin/ altında panel teması, css/account.css Hesabım teması)
   uploads/          Yüklenen görseller (img() önce buraya bakar)
 ```
 
@@ -77,7 +100,8 @@ yoksa aynı boyutta geçici bir placeholder görsel döndürür. Kendi görselle
 - [x] Veritabanı katmanı (MySQL)
 - [x] Admin paneli (ürün, kategori, sipariş, sayfa yönetimi)
 - [ ] Tema profili + AI ile tema düzenleme (Twig sandbox)
-- [ ] Üyelik sistemi
+- [x] Üyelik sistemi (kayıt, giriş, hesabım, siparişlerim, adreslerim)
+- [ ] E-posta bildirimleri ve şifre sıfırlama
 - [ ] Ödeme entegrasyonları
 - [ ] Pazaryeri entegrasyonları
 

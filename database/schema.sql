@@ -23,14 +23,16 @@ CREATE TABLE admins (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Brute-force koruması: IP ve e-posta bazlı başarısız giriş sayımı
+-- scope: admin (panel girişi), customer (müşteri girişi), register (kayıt), password (şifre doğrulaması)
 CREATE TABLE login_attempts (
     id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    scope        VARCHAR(20) NOT NULL DEFAULT 'admin',
     ip           VARCHAR(45) NOT NULL,
     email        VARCHAR(190) NOT NULL,
     success      TINYINT(1) NOT NULL DEFAULT 0,
     attempted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    KEY idx_login_ip (ip, attempted_at),
-    KEY idx_login_email (email, attempted_at)
+    KEY idx_login_ip (scope, ip, attempted_at),
+    KEY idx_login_email (scope, email, attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE admin_logs (
@@ -122,11 +124,27 @@ CREATE TABLE customers (
     last_name      VARCHAR(80) NOT NULL,
     email          VARCHAR(190) NOT NULL,
     phone          VARCHAR(30) NULL,
-    password_hash  VARCHAR(255) NULL,
+    password_hash  VARCHAR(255) NULL,   -- NULL: üyeliği olmayan (panelden/eski sistemden gelen) müşteri
     is_active      TINYINT(1) NOT NULL DEFAULT 1,
+    last_login_at  DATETIME NULL,
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_customers_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE customer_addresses (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    customer_id  INT UNSIGNED NOT NULL,
+    title        VARCHAR(60) NOT NULL,      -- Ev, İş …
+    full_name    VARCHAR(160) NOT NULL,
+    phone        VARCHAR(30) NOT NULL,
+    city         VARCHAR(60) NOT NULL,
+    district     VARCHAR(60) NOT NULL,
+    address      VARCHAR(500) NOT NULL,
+    is_default   TINYINT(1) NOT NULL DEFAULT 0,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_addresses_customer (customer_id),
+    CONSTRAINT fk_addresses_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE orders (
@@ -155,6 +173,7 @@ CREATE TABLE orders (
     UNIQUE KEY uq_orders_no (order_no),
     KEY idx_orders_status (status, created_at),
     KEY idx_orders_created (created_at),
+    KEY idx_orders_customer (customer_id, created_at),
     CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

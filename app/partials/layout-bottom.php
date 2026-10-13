@@ -18,7 +18,8 @@
     window.APP = {
         baseUrl: <?= json_encode(config('base_url')) ?>,
         currency: <?= json_encode(config('currency')) ?>,
-        freeShipping: <?= (float) config('free_shipping_limit') ?>
+        freeShipping: <?= (float) config('free_shipping_limit') ?>,
+        shippingFee: <?= (float) config('shipping_fee') ?>
     };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

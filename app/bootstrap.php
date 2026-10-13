@@ -14,6 +14,9 @@ load_env(ROOT_PATH . '/.env');
 $config = require APP_PATH . '/config.php';
 require APP_PATH . '/helpers.php';
 require APP_PATH . '/lib/db.php';
+require APP_PATH . '/lib/security.php';
+require APP_PATH . '/lib/shop.php';
+require APP_PATH . '/lib/customer.php';
 require APP_PATH . '/data/repository.php';
 
 // Panelden kaydedilen ayarlar config.php'deki varsayılanları ezer

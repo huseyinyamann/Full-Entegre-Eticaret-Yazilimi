@@ -50,8 +50,8 @@
                 <button class="icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#searchPanel" aria-label="Ara">
                     <i class="bi bi-search"></i>
                 </button>
-                <a class="icon-btn d-none d-lg-inline-flex" href="<?= url('giris') ?>" aria-label="Hesabım">
-                    <i class="bi bi-person"></i>
+                <a class="icon-btn d-none d-lg-inline-flex" href="<?= account_url() ?>" aria-label="Hesabım" title="<?= current_customer() ? e(current_customer()['name']) : 'Giriş Yap' ?>">
+                    <i class="bi bi-person<?= current_customer() ? '-check' : '' ?>"></i>
                 </a>
                 <a class="icon-btn d-none d-lg-inline-flex" href="<?= url('favorilerim') ?>" aria-label="Favorilerim">
                     <i class="bi bi-heart"></i><span class="count" data-wishlist-count>0</span>

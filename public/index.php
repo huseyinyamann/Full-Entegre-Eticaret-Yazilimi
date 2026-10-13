@@ -13,6 +13,18 @@ if (($seg[0] ?? '') === 'admin') {
     exit;
 }
 
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+
+// Vitrindeki tüm form gönderimleri oturum + CSRF token ister
+if (is_post()) {
+    store_session();
+    verify_csrf();
+}
+// Çerezi olan ziyaretçinin oturumu çıktı başlamadan çözülür (header'daki "Hesabım" simgesi için)
+current_customer();
+
 $listFilter = fn(array $extra = []) => array_merge([
     'q'    => $_GET['q'] ?? '',
     'sort' => $_GET['sirala'] ?? '',
@@ -69,11 +81,24 @@ switch ($seg[0] ?? '') {
         break;
 
     case 'sepet':
+        if (($seg[1] ?? '') === 'fiyatlar') {
+            // Sepetteki ürünlerin güncel fiyatı (yalnızca aktif ürünler; en fazla 50 id)
+            $ids = array_slice(array_filter(array_map('intval', explode(',', (string) ($_GET['ids'] ?? '')))), 0, CART_MAX_LINES);
+            $rows = $ids ? db_all('SELECT id, price, stock FROM products WHERE is_active = 1 AND id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids) : [];
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode((object) array_column(array_map(fn($r) => ['id' => (int) $r['id'], 'price' => (float) $r['price'], 'stock' => (int) $r['stock']], $rows), null, 'id'));
+            break;
+        }
         render('cart', ['title' => 'Sepetim']);
         break;
 
     case 'odeme':
-        render('checkout', ['title' => 'Ödeme']);
+    case 'siparis-tamamlandi':
+        require APP_PATH . '/store/checkout.php';
+        break;
+
+    case 'hesabim':
+        require APP_PATH . '/store/account.php';
         break;
 
     case 'favorilerim':
@@ -81,15 +106,11 @@ switch ($seg[0] ?? '') {
         break;
 
     case 'giris':
-        render('auth', ['title' => 'Giriş Yap', 'mode' => 'giris']);
-        break;
-
     case 'kayit-ol':
-        render('auth', ['title' => 'Kayıt Ol', 'mode' => 'kayit']);
-        break;
-
     case 'sifremi-unuttum':
-        render('auth', ['title' => 'Şifremi Unuttum', 'mode' => 'sifre']);
+    case 'cikis':
+        $mode = ['giris' => 'giris', 'kayit-ol' => 'kayit', 'sifremi-unuttum' => 'sifre', 'cikis' => 'cikis'][$seg[0]];
+        require APP_PATH . '/store/auth.php';
         break;
 
     case 'iletisim':

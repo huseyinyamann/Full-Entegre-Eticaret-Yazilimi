@@ -23,7 +23,11 @@
             <li><a href="<?= url('iletisim') ?>">İletişim</a></li>
         </ul>
         <div class="mobile-menu__footer">
-            <a href="<?= url('giris') ?>"><i class="bi bi-person"></i> Giriş Yap / Kayıt Ol</a>
+            <?php if (current_customer()): ?>
+                <a href="<?= url('hesabim') ?>"><i class="bi bi-person-check"></i> Hesabım</a>
+            <?php else: ?>
+                <a href="<?= url('giris') ?>"><i class="bi bi-person"></i> Giriş Yap / Kayıt Ol</a>
+            <?php endif; ?>
             <a href="tel:<?= e(preg_replace('/\s+/', '', config('phone'))) ?>"><i class="bi bi-telephone"></i> <?= e(config('phone')) ?></a>
             <a href="mailto:<?= e(config('email')) ?>"><i class="bi bi-envelope"></i> <?= e(config('email')) ?></a>
         </div>

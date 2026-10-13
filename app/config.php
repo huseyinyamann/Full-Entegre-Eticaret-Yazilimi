@@ -11,6 +11,7 @@ return [
     'address'     => 'Örnek Mah. Ticaret Cad. No:1, İstanbul',
     'whatsapp'    => '905000000000',
     'free_shipping_limit' => 750,
+    'shipping_fee' => 59.90,
     'announcements' => [
         '750 ₺ ve üzeri siparişlerde kargo bedava!',
         'Yeni sezon ürünlerinde %30\'a varan indirim',

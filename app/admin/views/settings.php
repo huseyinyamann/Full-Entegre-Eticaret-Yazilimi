@@ -74,6 +74,11 @@
                     <input class="form-control" id="free_shipping_limit" name="free_shipping_limit" value="<?= e(money_input($s['free_shipping_limit'])) ?>" inputmode="decimal">
                     <span class="input-group-text">₺</span>
                 </div>
+                <label class="form-label" for="shipping_fee">Kargo ücreti</label>
+                <div class="input-group mb-3">
+                    <input class="form-control" id="shipping_fee" name="shipping_fee" value="<?= e(money_input($s['shipping_fee'] ?? 0)) ?>" inputmode="decimal">
+                    <span class="input-group-text">₺</span>
+                </div>
                 <label class="form-label" for="announcements">Duyuru bandı</label>
                 <textarea class="form-control" id="announcements" name="announcements" rows="4"><?= e(implode("\n", $s['announcements'] ?? [])) ?></textarea>
                 <div class="form-text">Her satır ayrı bir duyuru olarak döner.</div>

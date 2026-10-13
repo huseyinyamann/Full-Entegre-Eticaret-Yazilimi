@@ -12,6 +12,7 @@ if (is_post()) {
         'address' => mb_substr(input('address'), 0, 300),
         'whatsapp' => preg_replace('/\D/', '', input('whatsapp')),
         'free_shipping_limit' => input_money('free_shipping_limit') ?? 0,
+        'shipping_fee' => input_money('shipping_fee') ?? 0,
         'announcements' => array_values(array_filter(array_map(fn($l) => mb_substr(trim($l), 0, 160), explode("\n", input('announcements'))))),
         'social' => [],
         'bank_accounts' => [],

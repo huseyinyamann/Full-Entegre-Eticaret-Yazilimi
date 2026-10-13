@@ -74,3 +74,20 @@ function not_found(): void
     render('404', ['title' => 'Sayfa bulunamadı']);
     exit;
 }
+
+/** Hesabım sayfaları kendi yerleşimini (sol menülü panel) kullanır */
+function account_render(string $view, array $vars = []): void
+{
+    $vars += ['title' => null, 'active' => ''];
+    extract($vars);
+    require APP_PATH . '/views/account/layout-top.php';
+    require APP_PATH . '/views/account/' . $view . '.php';
+    require APP_PATH . '/views/account/layout-bottom.php';
+}
+
+/** Sipariş durumu rozeti (vitrin) */
+function order_status(string $status): string
+{
+    [$label, $tone] = ORDER_STATUSES[$status] ?? [$status, 'secondary'];
+    return '<span class="o-status o-status--' . e($tone) . '">' . e($label) . '</span>';
+}

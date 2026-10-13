@@ -1,6 +1,6 @@
 /* Yaman Ticaret — mağaza ön yüz scriptleri
-   Sepet ve favoriler şimdilik localStorage'da tutulur; backend yazıldığında
-   Cart.save / Cart.load fonksiyonları API çağrılarıyla değiştirilecek. */
+   Sepet ve favoriler localStorage'da tutulur. Ödemede sunucuya yalnızca ürün/adet/seçenek gider;
+   fiyat ve stok her zaman sunucuda veritabanından hesaplanır. */
 (function () {
     'use strict';
 
@@ -46,7 +46,7 @@
         remove(key) { this.items = this.items.filter(i => this.key(i) !== key); this.save(); },
         count() { return this.items.reduce((s, i) => s + i.qty, 0); },
         total() { return this.items.reduce((s, i) => s + i.qty * i.price, 0); },
-        shipping() { const t = this.total(); return t === 0 || t >= APP.freeShipping ? 0 : 59.9; },
+        shipping() { const t = this.total(); return t === 0 || t >= APP.freeShipping ? 0 : APP.shippingFee; },
 
         itemHtml(i, big) {
             const k = esc(this.key(i));
@@ -293,12 +293,35 @@
             e.preventDefault(); f.reset(); toast('Bültene kaydoldun, teşekkürler!');
         }));
 
-        // Ödeme formu (backend gelene kadar)
-        $('[data-checkout]')?.addEventListener('submit', e => {
-            e.preventDefault();
-            if (!Cart.count()) return toast('Sepetin boş', 'danger');
-            toast('Ödeme altyapısı henüz bağlanmadı (demo).', 'info');
-        });
+        // Ödeme formu: sepet yalnızca id/adet/seçenek olarak gönderilir
+        const checkout = $('[data-checkout]');
+        if (checkout) {
+            checkout.addEventListener('submit', e => {
+                if (!Cart.count()) { e.preventDefault(); return toast('Sepetin boş', 'danger'); }
+                checkout.elements.cart.value = JSON.stringify(Cart.items.map(i => ({ id: i.id, qty: i.qty, size: i.size || '', color: i.color || '' })));
+                const btn = $('[type=submit]', checkout);
+                setTimeout(() => { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sipariş oluşturuluyor'; });
+            });
+            // Kayıtlı adresten doldur
+            $('[data-address-select]', checkout)?.addEventListener('change', e => {
+                const opt = e.target.selectedOptions[0];
+                if (!opt || !opt.dataset.address) return;
+                Object.entries(JSON.parse(opt.dataset.address)).forEach(([k, v]) => {
+                    if (checkout.elements[k]) checkout.elements[k].value = v;
+                });
+            });
+        }
+
+        // Şifre göster/gizle
+        $$('[data-toggle-password]').forEach(btn => btn.addEventListener('click', () => {
+            const input = $(btn.dataset.togglePassword);
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        }));
+
+        // Sipariş tamamlandı: sepeti boşalt
+        if ($('[data-order-complete]')) { Cart.items = []; Cart.save(); }
 
         // Geri sayım
         $$('[data-countdown]').forEach(el => {
@@ -325,11 +348,29 @@
         }
     }
 
+    // Sepet/ödeme sayfasında fiyat ve stokları sunucudan tazele (localStorage'daki fiyat eskimiş olabilir)
+    function refreshCartPrices() {
+        if (!Cart.items.length || !$('[data-cart-rows], [data-checkout]')) return;
+        const ids = [...new Set(Cart.items.map(i => i.id))].join(',');
+        fetch(APP.baseUrl + '/sepet/fiyatlar?ids=' + encodeURIComponent(ids), { headers: { Accept: 'application/json' } })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data) return;
+                const before = Cart.items.length;
+                Cart.items = Cart.items.filter(i => data[i.id]);
+                Cart.items.forEach(i => { i.price = data[i.id].price; });
+                Cart.save();
+                if (Cart.items.length < before) toast('Satışta olmayan ürünler sepetten çıkarıldı', 'info');
+            })
+            .catch(() => {});
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initSwipers();
         initUi();
         Cart.render();
         Wish.render();
+        refreshCartPrices();
     });
     window.addEventListener('load', () => $('#pageLoader')?.classList.add('is-hidden'));
     setTimeout(() => $('#pageLoader')?.classList.add('is-hidden'), 2500);

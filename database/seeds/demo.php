@@ -3,6 +3,9 @@
  * Demo veri: bin/install.php tarafından veritabanına yazılır.
  */
 
+const DEMO_CUSTOMER_EMAIL = 'musteri@yamanticaret.com';
+const DEMO_CUSTOMER_PASSWORD = 'Musteri.2026!';
+
 function demo_categories(): array
 {
     static $cats = null;
@@ -231,13 +234,25 @@ function seed_demo(): void
         ]), 'name' => "$first $last", 'email' => $email, 'city' => $city];
     }
 
+    // Giriş yapılabilen demo müşteri hesabı (mağaza > Hesabım sayfasını denemek için)
+    $demo = ['name' => 'Demo Müşteri', 'email' => DEMO_CUSTOMER_EMAIL, 'city' => 'İstanbul'];
+    $demo['id'] = db_insert('customers', [
+        'first_name' => 'Demo', 'last_name' => 'Müşteri', 'email' => DEMO_CUSTOMER_EMAIL, 'phone' => '0555 000 00 00',
+        'password_hash' => password_hash(DEMO_CUSTOMER_PASSWORD, PASSWORD_ARGON2ID),
+        'created_at' => date('Y-m-d H:i:s', strtotime('-60 days')),
+    ]);
+    db_insert('customer_addresses', [
+        'customer_id' => $demo['id'], 'title' => 'Ev', 'full_name' => 'Demo Müşteri', 'phone' => '0555 000 00 00',
+        'city' => 'İstanbul', 'district' => 'Kadıköy', 'address' => 'Caferağa Mah. Moda Cad. No:12 D:3', 'is_default' => 1,
+    ]);
+
     $statuses = ['teslim-edildi', 'teslim-edildi', 'teslim-edildi', 'kargoda', 'kargoda', 'hazirlaniyor', 'beklemede', 'iptal'];
     $payments = ['kredi-karti', 'kredi-karti', 'kredi-karti', 'havale', 'kapida-odeme'];
     for ($n = 1; $n <= 48; $n++) {
         $daysAgo = (int) floor(($n - 1) * 30 / 48);
         $created = date('Y-m-d H:i:s', strtotime("-{$daysAgo} days") - mt_rand(0, 8 * 3600));
         $status = $daysAgo <= 1 ? ['beklemede', 'hazirlaniyor'][$n % 2] : $statuses[mt_rand(0, count($statuses) - 1)];
-        $cust = $customers[mt_rand(0, count($customers) - 1)];
+        $cust = $n % 6 === 0 ? $demo : $customers[mt_rand(0, count($customers) - 1)];
         $payment = $payments[mt_rand(0, count($payments) - 1)];
 
         $items = [];
@@ -272,4 +287,5 @@ function seed_demo(): void
 
     $pdo->commit();
     echo '• Demo veri eklendi (' . count($productRows) . " ürün, 48 sipariş)\n";
+    echo "• Demo müşteri: " . DEMO_CUSTOMER_EMAIL . " / " . DEMO_CUSTOMER_PASSWORD . "\n";
 }

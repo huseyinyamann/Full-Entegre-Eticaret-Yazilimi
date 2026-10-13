@@ -59,12 +59,6 @@ function admin_boot(): void
 // Kimlik doğrulama
 // ---------------------------------------------------------------------------
 
-function client_ip(): string
-{
-    // Proxy arkasındaysanız güvendiğiniz proxy'nin başlığını burada okuyun; X-Forwarded-For doğrudan güvenilmez.
-    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-}
-
 function current_admin(): ?array
 {
     static $admin = false;
@@ -92,18 +86,15 @@ function attempt_login(string $email, string $password): ?string
     $email = mb_strtolower(trim($email));
     $ip = client_ip();
 
-    $byEmail = (int) db_value('SELECT COUNT(*) FROM login_attempts WHERE email = ? AND success = 0 AND attempted_at > NOW() - INTERVAL 15 MINUTE', [$email]);
-    $byIp = (int) db_value('SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND success = 0 AND attempted_at > NOW() - INTERVAL 15 MINUTE', [$ip]);
-    if ($byEmail >= LOGIN_MAX_PER_EMAIL || $byIp >= LOGIN_MAX_PER_IP) {
+    if (too_many_attempts('admin', $email, LOGIN_MAX_PER_EMAIL, LOGIN_MAX_PER_IP)) {
         return 'Çok fazla hatalı deneme yapıldı. Lütfen 15 dakika sonra tekrar deneyin.';
     }
 
     $admin = db_one('SELECT id, password_hash, is_active FROM admins WHERE email = ?', [$email]);
-    // Kullanıcı yoksa da hash doğrulaması yapılır; yanıt süresinden e-postanın varlığı anlaşılmasın
-    $hash = $admin['password_hash'] ?? '$argon2id$v=19$m=65536,t=4,p=1$ZFp4S0p6OFIybDBhSWZPRQ$7XP7vQq1RDrtahM6IIggtPN/FWWPmAwGtVTyd4bRh5c';
+    $hash = $admin['password_hash'] ?? DUMMY_PASSWORD_HASH;
     $ok = password_verify($password, $hash) && $admin && $admin['is_active'];
 
-    db_insert('login_attempts', ['ip' => $ip, 'email' => mb_substr($email, 0, 190), 'success' => $ok ? 1 : 0]);
+    record_attempt('admin', $email, $ok);
     if (!$ok) {
         return 'E-posta veya şifre hatalı.';
     }
@@ -121,7 +112,6 @@ function attempt_login(string $email, string $password): ?string
         'csrf' => bin2hex(random_bytes(32)),
     ];
     db_run('UPDATE admins SET last_login_at = NOW(), last_login_ip = ? WHERE id = ?', [$ip, $admin['id']]);
-    db_run('DELETE FROM login_attempts WHERE attempted_at < NOW() - INTERVAL 30 DAY');
     audit('login', 'admin', (int) $admin['id'], 'Panele giriş yapıldı');
     return null;
 }
@@ -152,39 +142,6 @@ function require_permission(string $permission): void
 }
 
 // ---------------------------------------------------------------------------
-// CSRF
-// ---------------------------------------------------------------------------
-
-function csrf_token(): string
-{
-    return $_SESSION['csrf'] ??= bin2hex(random_bytes(32));
-}
-
-function csrf_field(): string
-{
-    return '<input type="hidden" name="_csrf" value="' . e(csrf_token()) . '">';
-}
-
-function verify_csrf(): void
-{
-    // Tarayıcı Origin gönderiyorsa kendi sitemiz olmalı
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
-    if ($origin !== null && parse_url($origin, PHP_URL_HOST) !== parse_url('http://' . ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST)) {
-        csrf_fail();
-    }
-    $token = $_POST['_csrf'] ?? '';
-    if (!is_string($token) || empty($_SESSION['csrf']) || !hash_equals($_SESSION['csrf'], $token)) {
-        csrf_fail();
-    }
-}
-
-function csrf_fail(): never
-{
-    http_response_code(419);
-    exit('Oturum doğrulaması başarısız (CSRF). Sayfayı yenileyip tekrar deneyin.');
-}
-
-// ---------------------------------------------------------------------------
 // Yardımcılar
 // ---------------------------------------------------------------------------
 
@@ -197,29 +154,6 @@ function redirect(string $adminPath): never
 {
     header('Location: ' . admin_url($adminPath));
     exit;
-}
-
-function flash(string $type, string $message): void
-{
-    $_SESSION['flash'][] = [$type, $message];
-}
-
-function take_flashes(): array
-{
-    $f = $_SESSION['flash'] ?? [];
-    unset($_SESSION['flash']);
-    return $f;
-}
-
-function is_post(): bool
-{
-    return $_SERVER['REQUEST_METHOD'] === 'POST';
-}
-
-function input(string $key, string $default = ''): string
-{
-    $v = $_POST[$key] ?? $default;
-    return is_string($v) ? trim($v) : $default;
 }
 
 function input_int(string $key, ?int $default = null): ?int
@@ -292,16 +226,6 @@ function status_badge(string $status): string
     return '<span class="status status--' . e($class) . '">' . e($label) . '</span>';
 }
 
-const ORDER_STATUSES = [
-    'beklemede' => ['Beklemede', 'warning'],
-    'hazirlaniyor' => ['Hazırlanıyor', 'info'],
-    'kargoda' => ['Kargoda', 'primary'],
-    'teslim-edildi' => ['Teslim Edildi', 'success'],
-    'iptal' => ['İptal', 'danger'],
-    'iade' => ['İade', 'secondary'],
-];
-const PAYMENT_METHODS = ['kredi-karti' => 'Kredi Kartı', 'havale' => 'Havale / EFT', 'kapida-odeme' => 'Kapıda Ödeme'];
-const PAYMENT_STATUSES = ['bekliyor' => 'Ödeme Bekliyor', 'odendi' => 'Ödendi', 'iade' => 'İade Edildi'];
 const BADGES = ['yeni' => 'Yeni', 'indirim' => 'İndirim', 'cok-satan' => 'Çok Satan'];
 
 // ---------------------------------------------------------------------------
@@ -407,32 +331,9 @@ function checked(bool $cond): string
     return $cond ? ' checked' : '';
 }
 
-function fmt_date(?string $dt, bool $withTime = true): string
-{
-    return $dt ? date($withTime ? 'd.m.Y H:i' : 'd.m.Y', strtotime($dt)) : '—';
-}
-
-function invalid(array $errors, string $key): string
-{
-    return isset($errors[$key]) ? ' is-invalid' : '';
-}
-
-function error_text(array $errors, string $key): string
-{
-    return isset($errors[$key]) ? '<div class="invalid-feedback d-block">' . e($errors[$key]) . '</div>' : '';
-}
-
 /** Tutarı form alanında Türkçe biçimde gösterir (1299.9 → 1299,90) */
 function money_input(mixed $value): string
 {
     return is_numeric($value) ? number_format((float) $value, 2, ',', '') : '';
 }
 
-/** Şifre politikası: en az 10 karakter, harf ve rakam içermeli. Sorun yoksa null döner. */
-function password_problem(string $password): ?string
-{
-    if (mb_strlen($password) < 10) return 'Şifre en az 10 karakter olmalı.';
-    if (mb_strlen($password) > 200) return 'Şifre çok uzun.';
-    if (!preg_match('/\pL/u', $password) || !preg_match('/\d/', $password)) return 'Şifre en az bir harf ve bir rakam içermeli.';
-    return null;
-}

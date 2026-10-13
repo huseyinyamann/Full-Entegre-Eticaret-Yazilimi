@@ -21,7 +21,7 @@
             <div class="col-lg-2 col-md-6 footer-col">
                 <h6 class="footer-heading" data-collapse>Hızlı Erişim <i class="bi bi-plus d-md-none"></i></h6>
                 <ul class="footer-links">
-                    <li><a href="<?= url('giris') ?>">Hesabım</a></li>
+                    <li><a href="<?= account_url() ?>">Hesabım</a></li>
                     <li><a href="<?= url('sepet') ?>">Sepetim</a></li>
                     <li><a href="<?= url('favorilerim') ?>">Favorilerim</a></li>
                     <li><a href="<?= url('siparis-takip') ?>">Sipariş Takibi</a></li>
