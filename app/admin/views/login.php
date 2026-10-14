@@ -50,13 +50,13 @@
             <label class="form-label" for="email">E-posta</label>
             <div class="input-icon mb-3">
                 <i class="bi bi-envelope"></i>
-                <input type="email" class="form-control form-control-lg" id="email" name="email" value="<?= e($email) ?>" autocomplete="username" required autofocus>
+                <input type="email" class="form-control form-control-lg" id="email" name="email" value="<?= e($email !== '' ? $email : config('autofill')['admin']['email']) ?>" autocomplete="username" required autofocus>
             </div>
 
             <label class="form-label" for="password">Şifre</label>
             <div class="input-icon mb-4">
                 <i class="bi bi-lock"></i>
-                <input type="password" class="form-control form-control-lg" id="password" name="password" autocomplete="current-password" required>
+                <input type="password" class="form-control form-control-lg" id="password" name="password" value="<?= e(config('autofill')['admin']['password']) ?>" autocomplete="current-password" required>
                 <button type="button" class="input-icon__toggle" data-toggle-password="#password" aria-label="Şifreyi göster"><i class="bi bi-eye"></i></button>
             </div>
 

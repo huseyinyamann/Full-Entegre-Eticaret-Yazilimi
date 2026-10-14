@@ -34,4 +34,9 @@ return [
         'pass' => env('DB_PASS', ''),
     ],
     'session_secure' => env('SESSION_SECURE', '0') === '1',
+    // Yalnızca test için: giriş formlarını önceden doldurur. Boşsa (canlıda) hiçbir şey doldurulmaz.
+    'autofill' => [
+        'admin'    => ['email' => env('AUTOFILL_ADMIN_EMAIL', ''), 'password' => env('AUTOFILL_ADMIN_PASSWORD', '')],
+        'customer' => ['email' => env('AUTOFILL_CUSTOMER_EMAIL', ''), 'password' => env('AUTOFILL_CUSTOMER_PASSWORD', '')],
+    ],
 ];

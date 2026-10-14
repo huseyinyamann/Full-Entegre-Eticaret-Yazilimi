@@ -18,10 +18,10 @@ partial('breadcrumb', ['heading' => $titles[$mode], 'items' => [$titles[$mode] =
                         <?= csrf_field() ?>
                         <h5>Hesabına giriş yap</h5>
                         <label class="form-label" for="email">E-posta adresi</label>
-                        <input type="email" class="form-control mb-3" id="email" name="email" value="<?= e($old['email'] ?? '') ?>" autocomplete="email" required autofocus>
+                        <input type="email" class="form-control mb-3" id="email" name="email" value="<?= e(($old['email'] ?? '') !== '' ? $old['email'] : config('autofill')['customer']['email']) ?>" autocomplete="email" required autofocus>
                         <label class="form-label" for="password">Şifre</label>
                         <div class="input-group mb-3">
-                            <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
+                            <input type="password" class="form-control" id="password" name="password" value="<?= e(config('autofill')['customer']['password']) ?>" autocomplete="current-password" required>
                             <button class="btn btn-outline-secondary" type="button" data-toggle-password="#password" aria-label="Şifreyi göster"><i class="bi bi-eye"></i></button>
                         </div>
                         <div class="d-flex justify-content-between small mb-4">
